@@ -35,7 +35,9 @@ class Detector:
 					source.content[i].lstrip().find("assert ") == 0 or
 					source.content[i].lstrip().find("assert_") == 0 or
 					source.content[i].lstrip().find(".assert") > -1 or
-					source.content[i].lstrip().find("self.assert") == 0)
+					source.content[i].lstrip().find("self.assert") == 0 or
+					source.content[i].lstrip().find("pytest.raises") > -1 or
+					source.content[i].lstrip().find("pytest.warns") > -1)
 				):
 				occ.append(i+1)
 		return occ
@@ -228,7 +230,7 @@ class Detector:
 		occ,lista = [],[]
 		for method in methods:
 			for i in range( method.initial_line, method.final_line ):
-				if(source.content[i].find("pass\n") != -1 and i > 0 and source.content[i-1].find("def ") == -1):
+				if(source.content[i].find("pass\n") != -1 and i > 0):
 					occ.append(i+1)
 
 			if (len(occ) > 0):
