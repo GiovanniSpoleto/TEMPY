@@ -67,6 +67,7 @@ class Detector:
 		self.verifying_in_setup_method(source, methods)
 		self.non_functional_statement(source, methods)
 		self.undefined_test(source, methods)
+		self.empty_test(source, methods)
 		
 		# print("\n*********************************\n")
 		# print(str(len(self.occurrences)) + " test smells detected.")
@@ -251,3 +252,14 @@ class Detector:
 					occ.append( method.initial_line )
 					self.add_test_smell_occurence( "Undefined Test", method.name, occ)
 					occ.clear()
+
+	def empty_test(self, source, methods):
+		for method in methods:
+			if (self.prefixed_with_test(method) and not self.prefixed_with_assert(method)):
+				executable = False
+				for i in range(method.initial_line, method.final_line):
+					if (not source.empty[i] and source.content[i].split("#")[0].strip() not in ("pass", "...")):
+						executable = True
+						break
+				if (not executable):
+					self.add_test_smell_occurence("Empty Test", method.name, [method.initial_line])
