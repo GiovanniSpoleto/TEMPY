@@ -68,6 +68,7 @@ class Detector:
 		self.non_functional_statement(source, methods)
 		self.undefined_test(source, methods)
 		self.empty_test(source, methods)
+		self.redundant_assertion(source, methods)
 		
 		# print("\n*********************************\n")
 		# print(str(len(self.occurrences)) + " test smells detected.")
@@ -263,3 +264,14 @@ class Detector:
 						break
 				if (not executable):
 					self.add_test_smell_occurence("Empty Test", method.name, [method.initial_line])
+
+	def redundant_assertion(self, source, methods):
+		for method in methods:
+			if (self.prefixed_with_test(method) and not self.prefixed_with_assert(method)):
+				for i in range( method.initial_line, method.final_line ):
+					line = source.content[i].split('#')[0].strip()
+					if (not source.empty[i] and line.find("assert ") == 0):
+						condition = line[7:].strip()
+						sides = condition.split(" == ")
+						if (condition in ("True", "1") or (len(sides) == 2 and sides[0].strip() == sides[1].strip())):
+							self.add_test_smell_occurence( "Redundant Assertion", method.name, [i+1] )
