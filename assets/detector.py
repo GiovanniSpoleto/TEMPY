@@ -69,6 +69,7 @@ class Detector:
 		self.undefined_test(source, methods)
 		self.empty_test(source, methods)
 		self.redundant_assertion(source, methods)
+		self.ignored_test(source, methods)
 		
 		# print("\n*********************************\n")
 		# print(str(len(self.occurrences)) + " test smells detected.")
@@ -275,3 +276,13 @@ class Detector:
 						sides = condition.split(" == ")
 						if (condition in ("True", "1") or (len(sides) == 2 and sides[0].strip() == sides[1].strip())):
 							self.add_test_smell_occurence( "Redundant Assertion", method.name, [i+1] )
+
+	def ignored_test(self, source, methods):
+		for method in methods:
+			if (self.prefixed_with_test(method) and not self.prefixed_with_assert(method)):
+				i = method.initial_line - 2
+				while (i >= 0 and source.content[i].lstrip().find("@") == 0):
+					if (source.content[i].find("pytest.mark.skip") != -1 or source.content[i].find("unittest.skip") != -1):
+						self.add_test_smell_occurence( "Ignored Test", method.name, [i+1] )
+					i -= 1
+
