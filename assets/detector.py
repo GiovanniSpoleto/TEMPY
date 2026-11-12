@@ -255,6 +255,7 @@ class Detector:
 					self.add_test_smell_occurence( "Undefined Test", method.name, occ)
 					occ.clear()
 
+
 	def empty_test(self, source, methods):
 		for method in methods:
 			if (self.prefixed_with_test(method) and not self.prefixed_with_assert(method)):
@@ -266,23 +267,39 @@ class Detector:
 				if (not executable):
 					self.add_test_smell_occurence("Empty Test", method.name, [method.initial_line])
 
+
 	def redundant_assertion(self, source, methods):
+		lista,occ = [],[]
 		for method in methods:
-			if (self.prefixed_with_test(method) and not self.prefixed_with_assert(method)):
-				for i in range( method.initial_line, method.final_line ):
-					line = source.content[i].split('#')[0].strip()
-					if (not source.empty[i] and line.find("assert ") == 0):
-						condition = line[7:].strip()
-						sides = condition.split(" == ")
-						if (condition in ("True", "1") or (len(sides) == 2 and sides[0].strip() == sides[1].strip())):
-							self.add_test_smell_occurence( "Redundant Assertion", method.name, [i+1] )
+			for i in range( method.initial_line, method.final_line ):
+				if(not source.empty[i] and source.content[i].lstrip().find("assert ") == 0):
+					condition = source.content[i].split("#")[0].strip()[7:].strip()
+					sides = condition.split(" == ")
+					if (condition in ("True", "1") or (len(sides) == 2 and sides[0].strip() == sides[1].strip())):
+						if (len(self.how_many_assertions(source, method)) > 0 or self.prefixed_with_test(method) and not self.prefixed_with_assert(method)):
+							occ.append(i+1)
+
+			if (len(occ) > 0):
+				for x in range(len(occ)):
+					lista.append(occ[x])
+					self.add_test_smell_occurence( "Redundant Assertion", method.name, lista )
+					lista.clear()
+				occ.clear()
+
 
 	def ignored_test(self, source, methods):
+		lista,occ = [],[]
 		for method in methods:
 			if (self.prefixed_with_test(method) and not self.prefixed_with_assert(method)):
 				i = method.initial_line - 2
 				while (i >= 0 and source.content[i].lstrip().find("@") == 0):
 					if (source.content[i].find("pytest.mark.skip") != -1 or source.content[i].find("unittest.skip") != -1):
-						self.add_test_smell_occurence( "Ignored Test", method.name, [i+1] )
+						occ.append(i+1)
 					i -= 1
 
+			if (len(occ) > 0):
+				for x in range(len(occ)):
+					lista.append(occ[x])
+					self.add_test_smell_occurence( "Ignored Test", method.name, lista )
+					lista.clear()
+				occ.clear()
